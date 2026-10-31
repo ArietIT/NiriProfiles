@@ -1,0 +1,340 @@
+import { Palette } from "std-widgets.slint";
+
+export struct ProfileItem {
+    name: string,
+    initial: string,
+    active: bool,
+}
+
+global Theme {
+    out property <bool> dark: Palette.color-scheme == ColorScheme.dark;
+
+    out property <color> background:              dark ? #141218 : #FEF7FF;
+    out property <color> surface-container:       dark ? #211F26 : #F3EDF7;
+    out property <color> surface-hover:           dark ? #2B2930 : #ECE6F0;
+    out property <color> primary:                 dark ? #D0BCFF : #6750A4;
+    out property <color> primary-hover:           dark ? #E0D2FF : #7965AF;
+    out property <color> on-primary:              dark ? #381E72 : #FFFFFF;
+    out property <color> primary-container:       dark ? #4F378B : #E8DEF8;
+    out property <color> primary-container-hover: dark ? #5D45A0 : #DCCFF3;
+    out property <color> on-primary-container:    dark ? #EADDFF : #21005D;
+    out property <color> on-surface:              dark ? #E6E0E9 : #1D1B20;
+    out property <color> on-surface-variant:      dark ? #CAC4D0 : #49454F;
+    out property <color> error-container:         dark ? #8C1D18 : #F9DEDC;
+    out property <color> on-error-container:      dark ? #F9DEDC : #410E0B;
+}
+
+// Иконки Material (векторные, без шрифтов)
+global Icons {
+    out property <string> folder:  "M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z";
+    out property <string> save:    "M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z";
+    out property <string> import:  "M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z";
+    out property <string> refresh: "M17.65 6.35 A7.958 7.958 0 0 0 12 4 c-4.42 0 -7.99 3.58 -7.99 8 s3.57 8 7.99 8 c3.73 0 6.84 -2.55 7.73 -6 h-2.08 A5.99 5.99 0 0 1 12 18 c-3.31 0 -6 -2.69 -6 -6 s2.69 -6 6 -6 c1.66 0 3.14 0.69 4.22 1.78 L13 11 h7 V4 l-2.35 2.35 z";
+    out property <string> check:   "M9 16.17 L4.83 12 l-1.42 1.41 L9 19 L21 7 l-1.41 -1.41 z";
+}
+
+component PillButton inherits Rectangle {
+    in property <string> label;
+    in property <string> icon-path;
+    in property <bool> filled: false;
+    callback clicked();
+
+    border-radius: touch.pressed ? 28px : 18px;
+    background: root.filled
+        ? (touch.has-hover ? Theme.primary-hover : Theme.primary)
+        : (touch.has-hover ? Theme.primary-container-hover : Theme.primary-container);
+    animate background { duration: 200ms; easing: ease-in-out; }
+    animate border-radius { duration: 160ms; easing: ease-out; }
+
+    HorizontalLayout {
+        alignment: center;
+        spacing: 10px;
+
+        VerticalLayout {
+            alignment: center;
+            Path {
+                width: 22px;
+                height: 22px;
+                viewbox-width: 24;
+                viewbox-height: 24;
+                commands: root.icon-path;
+                fill: root.filled ? Theme.on-primary : Theme.on-primary-container;
+            }
+        }
+        if root.label != "" : Text {
+            text: root.label;
+            font-size: 15px;
+            font-weight: 600;
+            color: root.filled ? Theme.on-primary : Theme.on-primary-container;
+            vertical-alignment: center;
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => { root.clicked(); }
+    }
+}
+
+component ProfileCard inherits Rectangle {
+    in property <string> title;
+    in property <string> initial;
+    in property <bool> active;
+    callback clicked();
+
+    height: 80px;
+    border-radius: touch.pressed ? 28px : 20px;
+    background: active ? Theme.primary-container
+              : touch.has-hover ? Theme.surface-hover
+              : Theme.surface-container;
+    border-width: 2px;
+    border-color: active ? Theme.primary : transparent;
+
+    animate background { duration: 220ms; easing: ease-in-out; }
+    animate border-color { duration: 220ms; easing: ease-in-out; }
+    animate border-radius { duration: 160ms; easing: ease-out; }
+
+    HorizontalLayout {
+        padding-left: 18px;
+        padding-right: 18px;
+        spacing: 16px;
+
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 44px;
+                height: 44px;
+                border-radius: 22px;
+                background: root.active ? Theme.primary : Theme.primary-container;
+                animate background { duration: 220ms; }
+
+                Text {
+                    text: root.initial;
+                    font-size: 20px;
+                    font-weight: 600;
+                    color: root.active ? Theme.on-primary : Theme.on-primary-container;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+        }
+
+        VerticalLayout {
+            alignment: center;
+            spacing: 2px;
+            Text {
+                text: root.title;
+                font-size: 18px;
+                font-weight: 600;
+                color: root.active ? Theme.on-primary-container : Theme.on-surface;
+                overflow: elide;
+            }
+            Text {
+                text: root.active ? "Активный профиль" : "Нажмите, чтобы применить";
+                font-size: 12px;
+                color: Theme.on-surface-variant;
+            }
+        }
+
+        VerticalLayout {
+            alignment: center;
+            Path {
+                width: 24px;
+                height: 24px;
+                viewbox-width: 24;
+                viewbox-height: 24;
+                commands: Icons.check;
+                fill: Theme.primary;
+                opacity: root.active ? 1.0 : 0.0;
+                animate opacity { duration: 220ms; }
+            }
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => { root.clicked(); }
+    }
+}
+
+export component AppWindow inherits Window {
+    title: "Niri Profiles";
+    preferred-width: 420px;
+    preferred-height: 680px;
+    min-width: 360px;
+    min-height: 520px;
+    background: Theme.background;
+
+    in property <[ProfileItem]> profiles;
+    in property <string> profiles-path;
+    in property <bool> has-detected-config;
+    in property <string> detected-text;
+    in property <string> status-text;
+    in property <bool> status-error;
+    in-out property <string> backup-name;
+
+    callback select-profile(string);
+    callback force-reload();
+    callback backup-current(string);
+    callback choose-folder();
+    callback folder-picked(string);
+    callback import-current();
+
+    VerticalLayout {
+        padding: 24px;
+        spacing: 16px;
+
+        // ── Заголовок + выбор папки ──
+        HorizontalLayout {
+            spacing: 12px;
+
+            VerticalLayout {
+                horizontal-stretch: 1;
+                spacing: 4px;
+                Text {
+                    text: "Профили Niri";
+                    font-size: 28px;
+                    font-weight: 600;
+                    color: Theme.on-surface;
+                }
+                Text {
+                    text: root.profiles-path;
+                    font-size: 12px;
+                    color: Theme.on-surface-variant;
+                    overflow: elide;
+                }
+            }
+
+            VerticalLayout {
+                alignment: start;
+                PillButton {
+                    width: 48px;
+                    height: 48px;
+                    icon-path: Icons.folder;
+                    clicked => { root.choose-folder(); }
+                }
+            }
+        }
+
+        // ── Пустое состояние ──
+        if root.profiles.length == 0 : VerticalLayout {
+            vertical-stretch: 1;
+            alignment: center;
+            spacing: 12px;
+
+            Text {
+                text: root.has-detected-config
+                    ? "Найден текущий конфиг:\n" + root.detected-text
+                    : "В этой папке нет .kdl профилей.";
+                color: Theme.on-surface-variant;
+                font-size: 14px;
+                horizontal-alignment: center;
+                wrap: word-wrap;
+            }
+
+            if root.has-detected-config : PillButton {
+                height: 56px;
+                filled: true;
+                label: "Сохранить как профиль";
+                icon-path: Icons.import;
+                clicked => { root.import-current(); }
+            }
+
+            PillButton {
+                height: 56px;
+                label: "Выбрать папку с конфигами";
+                icon-path: Icons.folder;
+                clicked => { root.choose-folder(); }
+            }
+        }
+
+        // ── Список профилей ──
+        if root.profiles.length > 0 : fl := Flickable {
+            viewport-height: list.preferred-height;
+
+            list := VerticalLayout {
+                width: fl.width;
+                spacing: 12px;
+
+                for p in root.profiles : ProfileCard {
+                    title: p.name;
+                    initial: p.initial;
+                    active: p.active;
+                    clicked => { root.select-profile(p.name); }
+                }
+            }
+        }
+
+        // ── Статус ──
+        if root.status-text != "" : Rectangle {
+            border-radius: 16px;
+            background: root.status-error ? Theme.error-container : Theme.surface-container;
+
+            HorizontalLayout {
+                padding: 12px;
+                Text {
+                    text: root.status-text;
+                    font-size: 12px;
+                    wrap: word-wrap;
+                    horizontal-alignment: center;
+                    color: root.status-error ? Theme.on-error-container : Theme.on-surface-variant;
+                }
+            }
+        }
+
+        // ── Бэкап текущего профиля ──
+        HorizontalLayout {
+            spacing: 10px;
+            height: 56px;
+
+            Rectangle {
+                horizontal-stretch: 1;
+                border-radius: 16px;
+                background: Theme.surface-container;
+                border-width: 2px;
+                border-color: name-input.has-focus ? Theme.primary : transparent;
+                animate border-color { duration: 200ms; easing: ease-in-out; }
+
+                Text {
+                    x: 16px;
+                    y: 0px;
+                    height: parent.height;
+                    width: parent.width - 32px;
+                    text: "Имя копии (необязательно)";
+                    font-size: 14px;
+                    color: Theme.on-surface-variant;
+                    vertical-alignment: center;
+                    visible: name-input.text == "";
+                }
+
+                name-input := TextInput {
+                    x: 16px;
+                    y: 0px;
+                    height: parent.height;
+                    width: parent.width - 32px;
+                    text <=> root.backup-name;
+                    font-size: 14px;
+                    color: Theme.on-surface;
+                    vertical-alignment: center;
+                    accepted => { root.backup-current(self.text); }
+                }
+            }
+
+            PillButton {
+                width: 140px;
+                label: "Бэкап";
+                icon-path: Icons.save;
+                clicked => { root.backup-current(root.backup-name); }
+            }
+        }
+
+        // ── Force Reload ──
+        PillButton {
+            height: 56px;
+            filled: true;
+            label: "Force Reload";
+            icon-path: Icons.refresh;
+            clicked => { root.force-reload(); }
+        }
+    }
+}
